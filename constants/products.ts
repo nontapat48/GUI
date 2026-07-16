@@ -1,0 +1,96 @@
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+  image: string;
+  rating: number;
+  reviewsCount: number;
+  description: string;
+  colors: string[];
+  sizes: string[];
+  isFeatured?: boolean;
+}
+
+export const CATEGORIES = ['All', 'GPU', 'SSD', 'RAM', 'CPU', 'Peripherals'];
+
+export const PRODUCTS: Product[] = [
+  {
+    id: '1',
+    name: 'ASUS ROG Strix GeForce RTX 4090',
+    price: 1899.99,
+    category: 'GPU',
+    image: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?w=800&auto=format&fit=crop&q=80',
+    rating: 4.9,
+    reviewsCount: 384,
+    description: 'The ASUS ROG Strix GeForce RTX 4090 24GB GDDR6X is built to dominate. Features axial-tech fans scaled up for 23% more airflow, a patented vapor chamber, and massive heatsinks. Customizable Aura Sync RGB lighting included.',
+    colors: ['#1A1A1A', '#E5E7EB'],
+    sizes: ['24GB GDDR6X', '16GB GDDR6X'],
+    isFeatured: true,
+  },
+  {
+    id: '2',
+    name: 'Samsung 990 PRO M.2 NVMe SSD',
+    price: 169.99,
+    category: 'SSD',
+    image: 'https://images.unsplash.com/photo-1562976540-1502c2145186?w=800&auto=format&fit=crop&q=80',
+    rating: 4.8,
+    reviewsCount: 842,
+    description: 'Reach maximum performance with PCIe 4.0. Experience long-lasting, opponent-blasting speed. The smart heat controller delivers supreme power efficiency while maintaining ferocious speeds up to 7,450 MB/s.',
+    colors: ['#111827'],
+    sizes: ['1TB', '2TB', '4TB'],
+    isFeatured: true,
+  },
+  {
+    id: '3',
+    name: 'Corsair Dominator Titanium DDR5 RAM',
+    price: 229.99,
+    category: 'RAM',
+    image: 'https://images.unsplash.com/photo-1541029071515-84cc54f84dc5?w=800&auto=format&fit=crop&q=80',
+    rating: 4.7,
+    reviewsCount: 192,
+    description: 'CORSAIR DOMINATOR TITANIUM DDR5 memory combines clean, refined styling with superior forged aluminum construction and vibrant RGB lighting for a premium overclocking experience.',
+    colors: ['#1A1A1A', '#FFFFFF'],
+    sizes: ['32GB (2x16GB)', '64GB (2x32GB)'],
+    isFeatured: true,
+  },
+  {
+    id: '4',
+    name: 'AMD Ryzen 7 7800X3D Processor',
+    price: 369.00,
+    category: 'CPU',
+    image: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=800&auto=format&fit=crop&q=80',
+    rating: 4.9,
+    reviewsCount: 1530,
+    description: 'The dominant gaming processor, featuring AMD 3D V-Cache technology for massive gaming performance boosts. With 8 cores and 16 threads, this CPU runs games at ultra-smooth frame rates.',
+    colors: ['#2B2B2B'],
+    sizes: ['8-Core (Boxed)'],
+    isFeatured: true,
+  },
+  {
+    id: '5',
+    name: 'Logitech G Pro X Superlight 2',
+    price: 159.00,
+    category: 'Peripherals',
+    image: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800&auto=format&fit=crop&q=80',
+    rating: 4.8,
+    reviewsCount: 712,
+    description: 'The next icon of championship gaming - now faster and more precise. Powered by a LIGHTSPEED wireless connection and HERO 2 sensor, it weighs only 60 grams for ultra-fast, smooth hand movement.',
+    colors: ['#FFFFFF', '#000000', '#EC4899'],
+    sizes: ['Standard'],
+    isFeatured: false,
+  },
+  {
+    id: '6',
+    name: 'Razer Huntsman V3 Pro TKL Keyboard',
+    price: 219.99,
+    category: 'Peripherals',
+    image: 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=800&auto=format&fit=crop&q=80',
+    rating: 4.6,
+    reviewsCount: 231,
+    description: 'Experience gaming speed like never before with Analog Optical Gen-2 Switches. Featuring rapid trigger adjustments and customizable actuation levels from 0.1 to 4.0mm.',
+    colors: ['#000000', '#10B981'],
+    sizes: ['TKL Layout', 'Full Layout'],
+    isFeatured: false,
+  }
+];
