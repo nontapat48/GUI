@@ -8,9 +8,11 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { PRODUCTS, CATEGORIES, Product } from '../../constants/products';
+import { CATEGORIES } from '../../constants/products';
+import { useProducts } from '../../hooks/useProducts';
 import { ProductCard } from '../../components/ProductCard';
 import Colors from '../../constants/Colors';
 import { useColorScheme } from '../../components/useColorScheme';
@@ -21,8 +23,11 @@ export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Filter products by category and search query
-  const filteredProducts = PRODUCTS.filter((product) => {
+  // ดึงข้อมูลสินค้าจาก API
+  const { products, loading, error, refetch } = useProducts();
+
+  // กรองสินค้าตาม category และ search
+  const filteredProducts = products.filter((product) => {
     const matchesCategory =
       selectedCategory === 'All' || product.category === selectedCategory;
     const matchesSearch =
@@ -31,9 +36,39 @@ export default function HomeScreen() {
     return matchesCategory && matchesSearch;
   });
 
+  // --- Loading State ---
+  if (loading) {
+    return (
+      <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.tint} />
+        <Text style={[styles.statusText, { color: colors.tabIconDefault }]}>
+          กำลังโหลดสินค้า...
+        </Text>
+      </View>
+    );
+  }
+
+  // --- Error State ---
+  if (error) {
+    return (
+      <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
+        <Ionicons name="cloud-offline-outline" size={56} color={colors.tabIconDefault} />
+        <Text style={[styles.errorTitle, { color: colors.text }]}>โหลดข้อมูลไม่สำเร็จ</Text>
+        <Text style={[styles.errorDetail, { color: colors.tabIconDefault }]}>{error}</Text>
+        <TouchableOpacity
+          style={[styles.retryBtn, { backgroundColor: colors.tint }]}
+          onPress={refetch}
+        >
+          <Ionicons name="refresh-outline" size={16} color="#FFF" style={{ marginRight: 6 }} />
+          <Text style={styles.retryBtnText}>ลองใหม่</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // --- Main UI ---
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Scrollable Content */}
       <FlatList
         data={filteredProducts}
         renderItem={({ item }) => <ProductCard product={item} />}
@@ -44,7 +79,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <>
-            {/* Header Greeting */}
+            {/* Header */}
             <View style={styles.headerGreeting}>
               <Text style={[styles.welcomeText, { color: colors.tabIconDefault }]}>
                 Gear Up, Player!
@@ -55,8 +90,18 @@ export default function HomeScreen() {
             </View>
 
             {/* Search Bar */}
-            <View style={[styles.searchSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Ionicons name="search" size={20} color={colors.tabIconDefault} style={styles.searchIcon} />
+            <View
+              style={[
+                styles.searchSection,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
+            >
+              <Ionicons
+                name="search"
+                size={20}
+                color={colors.tabIconDefault}
+                style={styles.searchIcon}
+              />
               <TextInput
                 style={[styles.input, { color: colors.text }]}
                 placeholder="Search GPU, SSD, RAM..."
@@ -71,7 +116,7 @@ export default function HomeScreen() {
               )}
             </View>
 
-            {/* Promo Banner Card */}
+            {/* Promo Banner */}
             <View style={[styles.promoCard, { backgroundColor: colors.tint }]}>
               <View style={styles.promoTextContainer}>
                 <Text style={styles.promoLabel}>Gamer's Upgrade</Text>
@@ -89,7 +134,7 @@ export default function HomeScreen() {
               />
             </View>
 
-            {/* Categories Horizontal Scroller */}
+            {/* Categories */}
             <View style={styles.categoriesSection}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Categories</Text>
               <ScrollView
@@ -131,7 +176,9 @@ export default function HomeScreen() {
             {/* Grid Title */}
             <View style={styles.featuredHeader}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {selectedCategory === 'All' ? 'Featured Products' : `${selectedCategory} Products`}
+                {selectedCategory === 'All'
+                  ? 'Featured Products'
+                  : `${selectedCategory} Products`}
               </Text>
               <Text style={[styles.resultsCount, { color: colors.tabIconDefault }]}>
                 {filteredProducts.length} items
@@ -142,9 +189,7 @@ export default function HomeScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="search-outline" size={48} color={colors.tabIconDefault} />
-            <Text style={[styles.emptyText, { color: colors.text }]}>
-              No products found
-            </Text>
+            <Text style={[styles.emptyText, { color: colors.text }]}>No products found</Text>
             <Text style={[styles.emptySubtext, { color: colors.tabIconDefault }]}>
               Try searching for something else or clear filters
             </Text>
@@ -165,6 +210,44 @@ const styles = StyleSheet.create({
   row: {
     justifyContent: 'space-between',
   },
+
+  // Center (loading / error)
+  centerContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    gap: 12,
+  },
+  statusText: {
+    fontSize: 14,
+    marginTop: 8,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 8,
+  },
+  errorDetail: {
+    fontSize: 13,
+    textAlign: 'center',
+    maxWidth: 260,
+  },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+  },
+  retryBtnText: {
+    color: '#FFF',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+
+  // Header
   headerGreeting: {
     marginBottom: 16,
   },
@@ -177,6 +260,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     letterSpacing: -0.5,
   },
+
+  // Search
   searchSection: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -193,6 +278,8 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
   },
+
+  // Promo
   promoCard: {
     flexDirection: 'row',
     borderRadius: 16,
@@ -209,7 +296,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   promoLabel: {
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255,255,255,0.8)',
     fontSize: 11,
     fontWeight: 'bold',
     textTransform: 'uppercase',
@@ -247,6 +334,8 @@ const styles = StyleSheet.create({
     bottom: -20,
     transform: [{ rotate: '-10deg' }],
   },
+
+  // Categories
   categoriesSection: {
     marginBottom: 24,
   },
@@ -268,6 +357,8 @@ const styles = StyleSheet.create({
   categoryBtnText: {
     fontSize: 13,
   },
+
+  // Grid header
   featuredHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -277,6 +368,8 @@ const styles = StyleSheet.create({
   resultsCount: {
     fontSize: 12,
   },
+
+  // Empty
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',

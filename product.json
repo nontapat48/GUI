@@ -8,8 +8,14 @@
     "rating": 4.9,
     "reviewsCount": 384,
     "description": "The ASUS ROG Strix GeForce RTX 4090 24GB GDDR6X is built to dominate. Features axial-tech fans scaled up for 23% more airflow, a patented vapor chamber, and massive heatsinks. Customizable Aura Sync RGB lighting included.",
-    "colors": ["#1A1A1A", "#E5E7EB"],
-    "sizes": ["24GB GDDR6X", "16GB GDDR6X"],
+    "colors": [
+      "#1A1A1A",
+      "#E5E7EB"
+    ],
+    "sizes": [
+      "24GB GDDR6X",
+      "16GB GDDR6X"
+    ],
     "isFeatured": true
   },
   {
@@ -21,8 +27,14 @@
     "rating": 4.8,
     "reviewsCount": 842,
     "description": "Reach maximum performance with PCIe 4.0. Experience long-lasting, opponent-blasting speed. The smart heat controller delivers supreme power efficiency while maintaining ferocious speeds up to 7,450 MB/s.",
-    "colors": ["#111827"],
-    "sizes": ["1TB", "2TB", "4TB"],
+    "colors": [
+      "#111827"
+    ],
+    "sizes": [
+      "1TB",
+      "2TB",
+      "4TB"
+    ],
     "isFeatured": true
   },
   {
@@ -34,8 +46,14 @@
     "rating": 4.7,
     "reviewsCount": 192,
     "description": "CORSAIR DOMINATOR TITANIUM DDR5 memory combines clean, refined styling with superior forged aluminum construction and vibrant RGB lighting for a premium overclocking experience.",
-    "colors": ["#1A1A1A", "#FFFFFF"],
-    "sizes": ["32GB (2x16GB)", "64GB (2x32GB)"],
+    "colors": [
+      "#1A1A1A",
+      "#FFFFFF"
+    ],
+    "sizes": [
+      "32GB (2x16GB)",
+      "64GB (2x32GB)"
+    ],
     "isFeatured": true
   },
   {
@@ -47,8 +65,12 @@
     "rating": 4.9,
     "reviewsCount": 1530,
     "description": "The dominant gaming processor, featuring AMD 3D V-Cache technology for massive gaming performance boosts. With 8 cores and 16 threads, this CPU runs games at ultra-smooth frame rates.",
-    "colors": ["#2B2B2B"],
-    "sizes": ["8-Core (Boxed)"],
+    "colors": [
+      "#2B2B2B"
+    ],
+    "sizes": [
+      "8-Core (Boxed)"
+    ],
     "isFeatured": true
   },
   {
@@ -60,8 +82,14 @@
     "rating": 4.8,
     "reviewsCount": 712,
     "description": "The next icon of championship gaming - now faster and more precise. Powered by a LIGHTSPEED wireless connection and HERO 2 sensor, it weighs only 60 grams for ultra-fast, smooth hand movement.",
-    "colors": ["#FFFFFF", "#000000", "#EC4899"],
-    "sizes": ["Standard"],
+    "colors": [
+      "#FFFFFF",
+      "#000000",
+      "#EC4899"
+    ],
+    "sizes": [
+      "Standard"
+    ],
     "isFeatured": false
   },
   {
@@ -73,8 +101,14 @@
     "rating": 4.6,
     "reviewsCount": 231,
     "description": "Experience gaming speed like never before with Analog Optical Gen-2 Switches. Featuring rapid trigger adjustments and customizable actuation levels from 0.1 to 4.0mm.",
-    "colors": ["#000000", "#10B981"],
-    "sizes": ["TKL Layout", "Full Layout"],
+    "colors": [
+      "#000000",
+      "#10B981"
+    ],
+    "sizes": [
+      "TKL Layout",
+      "Full Layout"
+    ],
     "isFeatured": false
   }
 ]
