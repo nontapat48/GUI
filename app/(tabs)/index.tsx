@@ -72,7 +72,7 @@ export default function HomeScreen() {
       <FlatList
         data={filteredProducts}
         renderItem={({ item }) => <ProductCard product={item} />}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => String(item.id)}
         numColumns={2}
         columnWrapperStyle={styles.row}
         showsVerticalScrollIndicator={false}

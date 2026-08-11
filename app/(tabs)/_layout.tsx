@@ -85,6 +85,16 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="admin"
+        options={{
+          title: 'Manage',
+          tabBarLabel: 'Manage',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'build' : 'build-outline'} size={24} color={color} />
+          ),
+        }}
+      />
       {/* Hide two.tsx which was in the template */}
       <Tabs.Screen
         name="two"
