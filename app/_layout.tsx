@@ -62,15 +62,18 @@ function RootLayoutNav() {
 
     const inAuthGroup = segments[0] === '(auth)';
 
-    if (!user && !inAuthGroup) {
-      // Not logged in and not on an auth screen → go to login
-      router.replace('/(auth)/login');
-    } else if (user && inAuthGroup) {
-      // Logged in and still on auth screen → go to the app
-      router.replace('/(tabs)');
-    }
-    // user is set and not in auth group → stay on the current page, do nothing
-  }, [user, segments, rootNavState?.key]);
+    const timeoutId = setTimeout(() => {
+      if (!user && !inAuthGroup) {
+        // Not logged in and not on an auth screen → go to login
+        router.replace('/(auth)/login');
+      } else if (user && inAuthGroup) {
+        // Logged in and still on auth screen → go to the app
+        router.replace('/(tabs)');
+      }
+    }, 1);
+
+    return () => clearTimeout(timeoutId);
+  }, [user, segments, rootNavState?.key, router]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

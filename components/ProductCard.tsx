@@ -17,17 +17,9 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const colorScheme = useColorScheme() || 'light';
   const colors = Colors[colorScheme];
-  const { toggleFavorite, isFavorite, addToCart } = useCart();
+  const { toggleFavorite, isFavorite } = useCart();
 
   const favorite = isFavorite(product.id);
-
-  const handleAddToCart = (e: any) => {
-    // Prevent navigating to product details
-    e.stopPropagation();
-    const defaultColor = product.colors && product.colors.length > 0 ? product.colors[0] : 'Default';
-    const defaultSize = product.sizes && product.sizes.length > 0 ? product.sizes[0] : 'Default';
-    addToCart(product, 1, defaultColor, defaultSize);
-  };
 
   return (
     <Link href={`/product/${product.id}`} asChild>
@@ -63,17 +55,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </Text>
           </View>
 
-          {/* Bottom row: Price & Cart Button */}
+          {/* Bottom row: Price */}
           <View style={styles.footer}>
             <Text style={[styles.price, { color: colors.text }]}>
               ${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}
             </Text>
-            <TouchableOpacity
-              style={[styles.cartButton, { backgroundColor: colors.tint }]}
-              onPress={handleAddToCart}
-            >
-              <Ionicons name="add" size={18} color="#FFF" />
-            </TouchableOpacity>
           </View>
         </View>
       </TouchableOpacity>

@@ -63,6 +63,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="cart"
         options={{
+          href: user?.role === 'admin' ? null : '/(tabs)/cart',
           title: 'My Cart',
           tabBarLabel: 'Cart',
           tabBarIcon: ({ color, focused }) => (

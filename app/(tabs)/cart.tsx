@@ -8,10 +8,12 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart, CartItem, Order } from '../../context/CartContext';
+import { useProducts } from '../../hooks/useProducts';
 import Colors from '../../constants/Colors';
 import { useColorScheme } from '../../components/useColorScheme';
 
@@ -20,6 +22,7 @@ export default function CartScreen() {
   const colorScheme = useColorScheme() || 'light';
   const colors = Colors[colorScheme];
   const { cartItems, updateQuantity, removeFromCart, getCartTotal, clearCart, addOrder } = useCart();
+  const { deleteProduct } = useProducts();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const subtotal = getCartTotal();
@@ -27,44 +30,43 @@ export default function CartScreen() {
   const tax = subtotal * 0.07; // 7% tax
   const total = subtotal + shipping + tax;
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (isProcessing) return;
+    
+    setIsProcessing(true);
+    
+    // Simulate payment processing
+    await new Promise((res) => setTimeout(res, 1500));
+
+    // Reduce stock (Delete product from store)
+    for (const item of cartItems) {
+      try {
+        await deleteProduct(item.product.id);
+      } catch (e) {
+        console.log('Failed to delete product', item.product.id);
+      }
+    }
+
+    const orderId = 'ORD-' + Math.floor(Math.random() * 90000 + 10000);
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const newOrder: Order = {
+      id: orderId,
+      date: dateStr,
+      total: total,
+      status: 'Processing',
+      items: [...cartItems],
+    };
+
+    addOrder(newOrder);
+    clearCart();
+    setIsProcessing(false);
+
     Alert.alert(
-      'Confirm Order',
-      `Place order for $${total.toFixed(2)}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Place Order',
-          onPress: async () => {
-            setIsProcessing(true);
-            // Simulate payment processing
-            await new Promise((res) => setTimeout(res, 1500));
-
-            const orderId = 'ORD-' + Math.floor(Math.random() * 90000 + 10000);
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
-            const newOrder: Order = {
-              id: orderId,
-              date: dateStr,
-              total: total,
-              status: 'Processing',
-              items: [...cartItems],
-            };
-
-            addOrder(newOrder);
-            clearCart();
-            setIsProcessing(false);
-
-            Alert.alert(
-              '🎉 Order Placed!',
-              `Order ${orderId} placed successfully! Check your profile for order status.`,
-              [{ text: 'Awesome!', onPress: () => router.push('/(tabs)/profile') }]
-            );
-          },
-        },
-      ]
+      '🎉 Order Placed!',
+      `Order ${orderId} placed successfully! Check your profile for order status.`,
+      [{ text: 'Awesome!', onPress: () => router.push('/(tabs)/profile') }]
     );
   };
 

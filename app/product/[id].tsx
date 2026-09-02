@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { PRODUCTS } from '../../constants/products';
 import { useProducts } from '../../hooks/useProducts';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import Colors from '../../constants/Colors';
 import { useColorScheme } from '../../components/useColorScheme';
 
@@ -24,6 +25,7 @@ export default function ProductDetailsScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme() || 'light';
   const colors = Colors[colorScheme];
+  const { user } = useAuth();
   const { addToCart, toggleFavorite, isFavorite } = useCart();
   const { products } = useProducts();
   const productList = Array.isArray(products) && products.length > 0 ? products : PRODUCTS;
@@ -43,8 +45,11 @@ export default function ProductDetailsScreen() {
     );
   }
 
-  const [selectedColor, setSelectedColor] = useState(product.colors[0]);
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
+  const safeColors = Array.isArray(product.colors) && product.colors.length > 0 ? product.colors : ['Default'];
+  const safeSizes = Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : ['Default'];
+
+  const [selectedColor, setSelectedColor] = useState(safeColors[0]);
+  const [selectedSize, setSelectedSize] = useState(safeSizes[0]);
   const [quantity, setQuantity] = useState(1);
   const favorite = isFavorite(product.id);
 
@@ -107,7 +112,7 @@ export default function ProductDetailsScreen() {
           {/* Color Selector */}
           <Text style={[styles.sectionHeading, { color: colors.text }]}>Select Color</Text>
           <View style={styles.colorsRow}>
-            {product.colors.map((color) => {
+            {safeColors.map((color) => {
               const isSelected = selectedColor === color;
               return (
                 <TouchableOpacity
@@ -126,7 +131,7 @@ export default function ProductDetailsScreen() {
           {/* Size Selector */}
           <Text style={[styles.sectionHeading, { color: colors.text }]}>Select Size</Text>
           <View style={styles.sizesRow}>
-            {product.sizes.map((size) => {
+            {safeSizes.map((size) => {
               const isSelected = selectedSize === size;
               return (
                 <TouchableOpacity
@@ -153,34 +158,40 @@ export default function ProductDetailsScreen() {
             })}
           </View>
 
-          {/* Quantity Selector */}
-          <Text style={[styles.sectionHeading, { color: colors.text }]}>Quantity</Text>
-          <View style={[styles.quantityRow, { borderColor: colors.border }]}>
-            <TouchableOpacity onPress={decrementQty} style={styles.qtyBtn}>
-              <Ionicons name="remove" size={18} color={colors.text} />
-            </TouchableOpacity>
-            <Text style={[styles.qtyText, { color: colors.text }]}>{quantity}</Text>
-            <TouchableOpacity onPress={incrementQty} style={styles.qtyBtn}>
-              <Ionicons name="add" size={18} color={colors.text} />
-            </TouchableOpacity>
-          </View>
+          {/* Quantity Selector - Hidden for Admin */}
+          {user?.role !== 'admin' && (
+            <>
+              <Text style={[styles.sectionHeading, { color: colors.text }]}>Quantity</Text>
+              <View style={[styles.quantityRow, { borderColor: colors.border }]}>
+                <TouchableOpacity onPress={decrementQty} style={styles.qtyBtn}>
+                  <Ionicons name="remove" size={18} color={colors.text} />
+                </TouchableOpacity>
+                <Text style={[styles.qtyText, { color: colors.text }]}>{quantity}</Text>
+                <TouchableOpacity onPress={incrementQty} style={styles.qtyBtn}>
+                  <Ionicons name="add" size={18} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
         </View>
       </ScrollView>
 
-      {/* Bottom Buy CTA Bar */}
-      <View style={[styles.bottomBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-        <View style={styles.priceContainer}>
-          <Text style={[styles.totalLabel, { color: colors.tabIconDefault }]}>Total Price</Text>
-          <Text style={[styles.totalPrice, { color: colors.text }]}>
-            ${(product.price * quantity).toFixed(2)}
-          </Text>
-        </View>
+      {/* Bottom Buy CTA Bar - Hidden for Admin */}
+      {user?.role !== 'admin' && (
+        <View style={[styles.bottomBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+          <View style={styles.priceContainer}>
+            <Text style={[styles.totalLabel, { color: colors.tabIconDefault }]}>Total Price</Text>
+            <Text style={[styles.totalPrice, { color: colors.text }]}>
+              ${(product.price * quantity).toFixed(2)}
+            </Text>
+          </View>
 
-        <TouchableOpacity style={[styles.addToCartBtn, { backgroundColor: colors.tint }]} onPress={handleAddToCart}>
-          <Ionicons name="cart" size={20} color="#FFF" style={styles.cartIcon} />
-          <Text style={styles.addToCartText}>Add to Cart</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity style={[styles.addToCartBtn, { backgroundColor: colors.tint }]} onPress={handleAddToCart}>
+            <Ionicons name="cart" size={20} color="#FFF" style={styles.cartIcon} />
+            <Text style={styles.addToCartText}>Add to Cart</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
