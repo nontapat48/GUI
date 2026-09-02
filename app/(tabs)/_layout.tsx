@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { View, Text, StyleSheet } from 'react-native';
 
 export default function TabLayout() {
@@ -10,6 +11,7 @@ export default function TabLayout() {
   const colors = Colors[colorScheme || 'light'];
   const { getCartCount } = useCart();
   const cartCount = getCartCount();
+  const { user } = useAuth();
 
   return (
     <Tabs
@@ -88,6 +90,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="admin"
         options={{
+          href: user?.role === 'admin' ? '/(tabs)/admin' : null,
           title: 'Manage',
           tabBarLabel: 'Manage',
           tabBarIcon: ({ color, focused }) => (

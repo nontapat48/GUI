@@ -1,5 +1,7 @@
+import rawProducts from '../product.json';
+
 export interface Product {
-  id: number;
+  id: number | string;
   name: string;
   price: number;
   category: string;
@@ -13,3 +15,6 @@ export interface Product {
 }
 
 export const CATEGORIES = ['All', 'GPU', 'SSD', 'RAM', 'CPU', 'Peripherals'];
+
+export const PRODUCTS: Product[] = rawProducts as Product[];
+

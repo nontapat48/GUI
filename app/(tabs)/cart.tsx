@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,10 +7,11 @@ import {
   Image,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useCart, CartItem } from '../../context/CartContext';
+import { useCart, CartItem, Order } from '../../context/CartContext';
 import Colors from '../../constants/Colors';
 import { useColorScheme } from '../../components/useColorScheme';
 
@@ -18,7 +19,8 @@ export default function CartScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme() || 'light';
   const colors = Colors[colorScheme];
-  const { cartItems, updateQuantity, removeFromCart, getCartTotal, clearCart } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, getCartTotal, clearCart, addOrder } = useCart();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const subtotal = getCartTotal();
   const shipping = subtotal > 0 ? (subtotal > 200 ? 0 : 15) : 0; // Free shipping for orders over $200
@@ -26,15 +28,40 @@ export default function CartScreen() {
   const total = subtotal + shipping + tax;
 
   const handleCheckout = () => {
+    if (isProcessing) return;
     Alert.alert(
-      'Order Placed!',
-      'Thank you for your purchase. Your order has been successfully placed!',
+      'Confirm Order',
+      `Place order for $${total.toFixed(2)}?`,
       [
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Awesome',
-          onPress: () => {
+          text: 'Place Order',
+          onPress: async () => {
+            setIsProcessing(true);
+            // Simulate payment processing
+            await new Promise((res) => setTimeout(res, 1500));
+
+            const orderId = 'ORD-' + Math.floor(Math.random() * 90000 + 10000);
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            const newOrder: Order = {
+              id: orderId,
+              date: dateStr,
+              total: total,
+              status: 'Processing',
+              items: [...cartItems],
+            };
+
+            addOrder(newOrder);
             clearCart();
-            router.replace('/(tabs)');
+            setIsProcessing(false);
+
+            Alert.alert(
+              '🎉 Order Placed!',
+              `Order ${orderId} placed successfully! Check your profile for order status.`,
+              [{ text: 'Awesome!', onPress: () => router.push('/(tabs)/profile') }]
+            );
           },
         },
       ]
@@ -158,9 +185,22 @@ export default function CartScreen() {
             </View>
 
             {/* Checkout Button */}
-            <TouchableOpacity style={[styles.checkoutBtn, { backgroundColor: colors.tint }]} onPress={handleCheckout}>
-              <Text style={styles.checkoutBtnText}>Proceed to Checkout</Text>
-              <Ionicons name="arrow-forward" size={18} color="#FFF" style={styles.checkoutIcon} />
+            <TouchableOpacity
+              style={[styles.checkoutBtn, { backgroundColor: colors.tint, opacity: isProcessing ? 0.7 : 1 }]}
+              onPress={handleCheckout}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <ActivityIndicator color="#FFF" size="small" style={{ marginRight: 8 }} />
+                  <Text style={styles.checkoutBtnText}>Processing Payment...</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.checkoutBtnText}>Proceed to Checkout</Text>
+                  <Ionicons name="arrow-forward" size={18} color="#FFF" style={styles.checkoutIcon} />
+                </>
+              )}
             </TouchableOpacity>
           </View>
         }

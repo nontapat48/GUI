@@ -28,12 +28,21 @@ export function useProducts(): UseProductsResult {
       if (!response.ok) {
         throw new Error(`Server responded with status ${response.status}`);
       }
-      const data: Product[] = await response.json();
-      setProducts(data);
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        setProducts(data);
+      } else if (data && Array.isArray(data.data)) {
+        setProducts(data.data);
+      } else if (data && Array.isArray(data.products)) {
+        setProducts(data.products);
+      } else {
+        setProducts([]);
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Unknown error occurred'
       );
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -76,7 +85,7 @@ export function useProducts(): UseProductsResult {
   // --- DELETE ---
   const deleteProduct = useCallback(async (id: number | string) => {
     // 1. Optimistic removal from state so UI updates instantly
-    setProducts((prev) => prev.filter((p) => String(p.id) !== String(id)));
+    setProducts((prev) => (Array.isArray(prev) ? prev.filter((p) => String(p.id) !== String(id)) : []));
 
     try {
       // Method A: DELETE /api/products/:id

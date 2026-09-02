@@ -12,6 +12,7 @@ import {
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { PRODUCTS } from '../../constants/products';
+import { useProducts } from '../../hooks/useProducts';
 import { useCart } from '../../context/CartContext';
 import Colors from '../../constants/Colors';
 import { useColorScheme } from '../../components/useColorScheme';
@@ -24,9 +25,11 @@ export default function ProductDetailsScreen() {
   const colorScheme = useColorScheme() || 'light';
   const colors = Colors[colorScheme];
   const { addToCart, toggleFavorite, isFavorite } = useCart();
+  const { products } = useProducts();
+  const productList = Array.isArray(products) && products.length > 0 ? products : PRODUCTS;
 
   // Find product by id
-  const product = PRODUCTS.find((p) => p.id === id);
+  const product = (productList || []).find((p) => String(p.id) === String(id));
 
   if (!product) {
     return (

@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { CATEGORIES } from '../../constants/products';
+import { CATEGORIES, PRODUCTS } from '../../constants/products';
 import { useProducts } from '../../hooks/useProducts';
 import { ProductCard } from '../../components/ProductCard';
 import Colors from '../../constants/Colors';
@@ -27,12 +27,13 @@ export default function HomeScreen() {
   const { products, loading, error, refetch } = useProducts();
 
   // กรองสินค้าตาม category และ search
-  const filteredProducts = products.filter((product) => {
+  const productList = Array.isArray(products) && products.length > 0 ? products : PRODUCTS;
+  const filteredProducts = (productList || []).filter((product) => {
     const matchesCategory =
       selectedCategory === 'All' || product.category === selectedCategory;
     const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase());
+      (product.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (product.category?.toLowerCase() || '').includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 

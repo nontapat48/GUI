@@ -6,28 +6,40 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
-  FlatList,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useCart } from '../../context/CartContext';
+import { useCart, Order } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import { PRODUCTS } from '../../constants/products';
+import { useProducts } from '../../hooks/useProducts';
 import Colors from '../../constants/Colors';
 import { useColorScheme } from '../../components/useColorScheme';
-
-const MOCK_ORDERS = [
-  { id: 'ORD-99081', date: 'July 10, 2026', total: 429.98, status: 'Delivered' },
-  { id: 'ORD-89122', date: 'June 28, 2026', total: 79.99, status: 'Delivered' },
-];
 
 export default function ProfileScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme() || 'light';
   const colors = Colors[colorScheme];
-  const { favorites } = useCart();
+  const { favorites, orders } = useCart();
+  const { user, logout } = useAuth();
+  const { products } = useProducts();
+  const productList = Array.isArray(products) && products.length > 0 ? products : PRODUCTS;
+
+  // Get initials from username
+  const displayName = user?.username || 'Guest';
+  const initials = displayName.slice(0, 2).toUpperCase();
 
   // Find favorite products
-  const favoriteProducts = PRODUCTS.filter((p) => favorites.includes(p.id));
+  const favoriteProducts = (productList || []).filter((p) => favorites.includes(String(p.id)));
+
+  const statusColor = (status: string) => {
+    switch (status) {
+      case 'Delivered': return '#10B981';
+      case 'Processing': return '#F59E0B';
+      case 'Shipped': return '#6366F1';
+      default: return '#6B7280';
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -35,21 +47,28 @@ export default function ProfileScreen() {
         {/* Header Profile Info */}
         <View style={[styles.profileHeader, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[styles.avatarContainer, { backgroundColor: colors.tint }]}>
-            <Text style={styles.avatarText}>JD</Text>
+            <Text style={styles.avatarText}>{initials}</Text>
           </View>
           <View style={styles.userInfo}>
-            <Text style={[styles.userName, { color: colors.text }]}>John Doe</Text>
-            <Text style={[styles.userEmail, { color: colors.tabIconDefault }]}>john.doe@example.com</Text>
+            <View style={styles.nameRow}>
+              <Text style={[styles.userName, { color: colors.text }]}>{displayName}</Text>
+              {user?.role === 'admin' && (
+                <View style={[styles.roleBadge, { backgroundColor: colors.tint }]}>
+                  <Ionicons name="build" size={10} color="#FFF" />
+                  <Text style={styles.roleBadgeText}> Admin</Text>
+                </View>
+              )}
+            </View>
+            <Text style={[styles.userRole, { color: colors.tabIconDefault }]}>
+              {user?.role === 'admin' ? 'Store Administrator' : 'Customer Account'}
+            </Text>
           </View>
-          <TouchableOpacity style={styles.editBtn}>
-            <Ionicons name="create-outline" size={20} color={colors.text} />
-          </TouchableOpacity>
         </View>
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
           <View style={[styles.statBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.statNum, { color: colors.tint }]}>{MOCK_ORDERS.length}</Text>
+            <Text style={[styles.statNum, { color: colors.tint }]}>{orders.length}</Text>
             <Text style={[styles.statLabel, { color: colors.tabIconDefault }]}>Orders</Text>
           </View>
           <View style={[styles.statBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -57,8 +76,10 @@ export default function ProfileScreen() {
             <Text style={[styles.statLabel, { color: colors.tabIconDefault }]}>Wishlist</Text>
           </View>
           <View style={[styles.statBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.statNum, { color: colors.tint }]}>240</Text>
-            <Text style={[styles.statLabel, { color: colors.tabIconDefault }]}>Points</Text>
+            <Text style={[styles.statNum, { color: colors.tint }]}>
+              ${orders.reduce((sum, o) => sum + o.total, 0).toFixed(0)}
+            </Text>
+            <Text style={[styles.statLabel, { color: colors.tabIconDefault }]}>Spent</Text>
           </View>
         </View>
 
@@ -78,7 +99,7 @@ export default function ProfileScreen() {
                     {product.name}
                   </Text>
                   <Text style={[styles.wishlistPrice, { color: colors.tint }]}>
-                    ${product.price.toFixed(2)}
+                    ${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -88,21 +109,43 @@ export default function ProfileScreen() {
 
         {/* Order History */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Orders</Text>
-          {MOCK_ORDERS.map((order) => (
-            <View key={order.id} style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.orderHeader}>
-                <Text style={[styles.orderId, { color: colors.text }]}>{order.id}</Text>
-                <View style={styles.statusBadge}>
-                  <Text style={styles.statusText}>{order.status}</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Order History</Text>
+          {orders.length === 0 ? (
+            <View style={[styles.emptyOrders, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Ionicons name="receipt-outline" size={40} color={colors.tabIconDefault} />
+              <Text style={[styles.emptyOrderText, { color: colors.tabIconDefault }]}>
+                No orders yet. Start shopping!
+              </Text>
+            </View>
+          ) : (
+            orders.map((order: Order) => (
+              <View key={order.id} style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.orderHeader}>
+                  <Text style={[styles.orderId, { color: colors.text }]}>{order.id}</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: statusColor(order.status) }]}>
+                    <Text style={styles.statusText}>{order.status}</Text>
+                  </View>
+                </View>
+                {order.items.slice(0, 2).map((item, idx) => (
+                  <View key={idx} style={styles.orderItemRow}>
+                    <Image source={{ uri: item.product.image }} style={styles.orderItemImg} />
+                    <Text style={[styles.orderItemName, { color: colors.tabIconDefault }]} numberOfLines={1}>
+                      {item.product.name} × {item.quantity}
+                    </Text>
+                  </View>
+                ))}
+                {order.items.length > 2 && (
+                  <Text style={[styles.moreItems, { color: colors.tabIconDefault }]}>
+                    +{order.items.length - 2} more item{order.items.length - 2 > 1 ? 's' : ''}
+                  </Text>
+                )}
+                <View style={[styles.orderFooter, { borderTopColor: colors.border }]}>
+                  <Text style={[styles.orderDate, { color: colors.tabIconDefault }]}>{order.date}</Text>
+                  <Text style={[styles.orderTotal, { color: colors.text }]}>Total: ${order.total.toFixed(2)}</Text>
                 </View>
               </View>
-              <View style={styles.orderFooter}>
-                <Text style={[styles.orderDate, { color: colors.tabIconDefault }]}>{order.date}</Text>
-                <Text style={[styles.orderTotal, { color: colors.text }]}>Total: ${order.total.toFixed(2)}</Text>
-              </View>
-            </View>
-          ))}
+            ))
+          )}
         </View>
 
         {/* Action Menu */}
@@ -131,7 +174,7 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={16} color={colors.tabIconDefault} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={logout}>
             <View style={styles.menuItemLeft}>
               <Ionicons name="log-out-outline" size={20} color="#EF4444" style={styles.menuIcon} />
               <Text style={[styles.menuText, { color: '#EF4444' }]}>Log Out</Text>
@@ -176,16 +219,31 @@ const styles = StyleSheet.create({
   userInfo: {
     flex: 1,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
   userName: {
     fontSize: 18,
     fontWeight: 'bold',
   },
-  userEmail: {
+  roleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  roleBadgeText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  userRole: {
     fontSize: 12,
     marginTop: 2,
-  },
-  editBtn: {
-    padding: 4,
   },
   statsRow: {
     flexDirection: 'row',
@@ -242,6 +300,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 2,
   },
+  emptyOrders: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 24,
+    alignItems: 'center',
+  },
+  emptyOrderText: {
+    fontSize: 13,
+    textAlign: 'center',
+    marginTop: 8,
+  },
   orderCard: {
     borderRadius: 12,
     borderWidth: 1,
@@ -259,7 +328,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   statusBadge: {
-    backgroundColor: '#10B981',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
@@ -269,10 +337,33 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
+  orderItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  orderItemImg: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  orderItemName: {
+    fontSize: 12,
+    flex: 1,
+  },
+  moreItems: {
+    fontSize: 11,
+    marginBottom: 4,
+    fontStyle: 'italic',
+  },
   orderFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: 1,
   },
   orderDate: {
     fontSize: 11,

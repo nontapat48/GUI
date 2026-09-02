@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PRODUCTS, Product } from '../../constants/products';
+import { useProducts } from '../../hooks/useProducts';
 import { ProductCard } from '../../components/ProductCard';
 import Colors from '../../constants/Colors';
 import { useColorScheme } from '../../components/useColorScheme';
@@ -32,10 +33,13 @@ export default function ExploreScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const filteredProducts = PRODUCTS.filter((product) => {
+  const { products } = useProducts();
+  const productList = Array.isArray(products) && products.length > 0 ? products : PRODUCTS;
+
+  const filteredProducts = (productList || []).filter((product) => {
     const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchQuery.toLowerCase());
+      (product.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (product.description?.toLowerCase() || '').includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory ? product.category === selectedCategory : true;
     return matchesSearch && matchesCategory;
   });
@@ -128,9 +132,9 @@ export default function ExploreScreen() {
               Recommended for You
             </Text>
             <FlatList
-              data={PRODUCTS.slice(0, 4)}
+              data={(productList || []).slice(0, 4)}
               renderItem={({ item }) => <ProductCard product={item} />}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => String(item.id)}
               numColumns={2}
               columnWrapperStyle={styles.row}
               scrollEnabled={false}

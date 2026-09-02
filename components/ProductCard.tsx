@@ -24,7 +24,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const handleAddToCart = (e: any) => {
     // Prevent navigating to product details
     e.stopPropagation();
-    addToCart(product, 1, product.colors[0], product.sizes[0]);
+    const defaultColor = product.colors && product.colors.length > 0 ? product.colors[0] : 'Default';
+    const defaultSize = product.sizes && product.sizes.length > 0 ? product.sizes[0] : 'Default';
+    addToCart(product, 1, defaultColor, defaultSize);
   };
 
   return (
@@ -55,15 +57,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {/* Rating */}
           <View style={styles.ratingContainer}>
             <Ionicons name="star" size={14} color="#F59E0B" />
-            <Text style={[styles.rating, { color: colors.text }]}>{product.rating}</Text>
+            <Text style={[styles.rating, { color: colors.text }]}>{product.rating ?? 5.0}</Text>
             <Text style={[styles.reviewsCount, { color: colors.tabIconDefault }]}>
-              ({product.reviewsCount})
+              ({product.reviewsCount ?? 0})
             </Text>
           </View>
 
           {/* Bottom row: Price & Cart Button */}
           <View style={styles.footer}>
-            <Text style={[styles.price, { color: colors.text }]}>${product.price.toFixed(2)}</Text>
+            <Text style={[styles.price, { color: colors.text }]}>
+              ${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}
+            </Text>
             <TouchableOpacity
               style={[styles.cartButton, { backgroundColor: colors.tint }]}
               onPress={handleAddToCart}

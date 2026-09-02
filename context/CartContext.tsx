@@ -8,15 +8,25 @@ export interface CartItem {
   selectedSize: string;
 }
 
+export interface Order {
+  id: string;
+  date: string;
+  total: number;
+  status: string;
+  items: CartItem[];
+}
+
 interface CartContextType {
   cartItems: CartItem[];
   favorites: string[];
+  orders: Order[];
   addToCart: (product: Product, quantity: number, color: string, size: string) => void;
-  removeFromCart: (productId: string, color: string, size: string) => void;
-  updateQuantity: (productId: string, color: string, size: string, quantity: number) => void;
+  removeFromCart: (productId: string | number, color: string, size: string) => void;
+  updateQuantity: (productId: string | number, color: string, size: string, quantity: number) => void;
   clearCart: () => void;
-  toggleFavorite: (productId: string) => void;
-  isFavorite: (productId: string) => boolean;
+  addOrder: (order: Order) => void;
+  toggleFavorite: (productId: string | number) => void;
+  isFavorite: (productId: string | number) => boolean;
   getCartTotal: () => number;
   getCartCount: () => number;
 }
@@ -26,12 +36,13 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
 
   const addToCart = (product: Product, quantity: number, color: string, size: string) => {
     setCartItems((prevItems) => {
       const existingItemIndex = prevItems.findIndex(
         (item) =>
-          item.product.id === product.id &&
+          String(item.product.id) === String(product.id) &&
           item.selectedColor === color &&
           item.selectedSize === size
       );
@@ -46,12 +57,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   };
 
-  const removeFromCart = (productId: string, color: string, size: string) => {
+  const removeFromCart = (productId: string | number, color: string, size: string) => {
+    const idStr = String(productId);
     setCartItems((prevItems) =>
       prevItems.filter(
         (item) =>
           !(
-            item.product.id === productId &&
+            String(item.product.id) === idStr &&
             item.selectedColor === color &&
             item.selectedSize === size
           )
@@ -59,14 +71,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     );
   };
 
-  const updateQuantity = (productId: string, color: string, size: string, quantity: number) => {
+  const updateQuantity = (productId: string | number, color: string, size: string, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(productId, color, size);
       return;
     }
+    const idStr = String(productId);
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.product.id === productId &&
+        String(item.product.id) === idStr &&
         item.selectedColor === color &&
         item.selectedSize === size
           ? { ...item, quantity }
@@ -79,14 +92,19 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setCartItems([]);
   };
 
-  const toggleFavorite = (productId: string) => {
+  const addOrder = (order: Order) => {
+    setOrders((prev) => [order, ...prev]);
+  };
+
+  const toggleFavorite = (productId: string | number) => {
+    const idStr = String(productId);
     setFavorites((prev) =>
-      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]
+      prev.includes(idStr) ? prev.filter((id) => id !== idStr) : [...prev, idStr]
     );
   };
 
-  const isFavorite = (productId: string) => {
-    return favorites.includes(productId);
+  const isFavorite = (productId: string | number) => {
+    return favorites.includes(String(productId));
   };
 
   const getCartTotal = () => {
@@ -102,10 +120,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       value={{
         cartItems,
         favorites,
+        orders,
         addToCart,
         removeFromCart,
         updateQuantity,
         clearCart,
+        addOrder,
         toggleFavorite,
         isFavorite,
         getCartTotal,

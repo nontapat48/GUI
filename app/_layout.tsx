@@ -1,23 +1,22 @@
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { ThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
+import { CartProvider } from '../context/CartContext';
+import { AuthProvider, useAuth } from '../context/AuthContext';
 
 export {
-  // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from 'expo-router';
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: '(tabs)',
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -25,7 +24,6 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -40,23 +38,48 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <AuthProvider>
+      <CartProvider>
+        <RootLayoutNav />
+      </CartProvider>
+    </AuthProvider>
+  );
 }
-
-import { CartProvider } from '../context/CartContext';
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const { user } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+  // useRootNavigationState is undefined until the navigator has fully mounted.
+  // This is the official Expo Router pattern to avoid "navigate before mount" errors.
+  const rootNavState = useRootNavigationState();
+
+  useEffect(() => {
+    // Wait until the navigator is mounted before making any routing decisions
+    if (!rootNavState?.key) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!user && !inAuthGroup) {
+      // Not logged in and not on an auth screen → go to login
+      router.replace('/(auth)/login');
+    } else if (user && inAuthGroup) {
+      // Logged in and still on auth screen → go to the app
+      router.replace('/(tabs)');
+    }
+    // user is set and not in auth group → stay on the current page, do nothing
+  }, [user, segments, rootNavState?.key]);
 
   return (
-    <CartProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="product/[id]" options={{ title: 'Product Details', headerBackTitle: 'Back' }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        </Stack>
-      </ThemeProvider>
-    </CartProvider>
+    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <Stack>
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="product/[id]" options={{ title: 'Product Details', headerBackTitle: 'Back' }} />
+        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+      </Stack>
+    </ThemeProvider>
   );
 }
