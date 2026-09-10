@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Product } from '../constants/products';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Product, PRODUCTS } from '../constants/products';
 
 const API_URL = 'http://119.59.102.161:3023/api/products';
 
@@ -29,20 +30,46 @@ export function useProducts(): UseProductsResult {
         throw new Error(`Server responded with status ${response.status}`);
       }
       const data = await response.json();
+      
+      let fetchedProducts: Product[] = [];
       if (Array.isArray(data)) {
-        setProducts(data);
+        fetchedProducts = data;
       } else if (data && Array.isArray(data.data)) {
-        setProducts(data.data);
+        fetchedProducts = data.data;
       } else if (data && Array.isArray(data.products)) {
-        setProducts(data.products);
-      } else {
-        setProducts([]);
+        fetchedProducts = data.products;
       }
+      
+      const apiIds = new Set(fetchedProducts.map(p => String(p.id)));
+      let mergedProducts = [
+        ...PRODUCTS.filter(p => !apiIds.has(String(p.id))),
+        ...fetchedProducts
+      ];
+      
+      // Apply local overrides for sample products
+      try {
+        const storedUpdates = await AsyncStorage.getItem('@local_product_updates');
+        if (storedUpdates) {
+          const updates = JSON.parse(storedUpdates);
+          mergedProducts = mergedProducts.map(p => 
+            updates[String(p.id)] ? { ...p, ...updates[String(p.id)], id: p.id } : p
+          );
+        }
+        const storedDeleted = await AsyncStorage.getItem('@local_product_deleted');
+        if (storedDeleted) {
+          const deleted = JSON.parse(storedDeleted);
+          mergedProducts = mergedProducts.filter(p => !deleted.includes(String(p.id)));
+        }
+      } catch (e) {
+        console.warn("Error loading local updates", e);
+      }
+      
+      setProducts(mergedProducts);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Unknown error occurred'
       );
-      setProducts([]);
+      setProducts([...PRODUCTS]);
     } finally {
       setLoading(false);
     }
@@ -77,6 +104,21 @@ export function useProducts(): UseProductsResult {
     if (!response.ok) {
       let msg = `ไม่สามารถแก้ไขสินค้าได้ (${response.status})`;
       try { msg = await response.text(); } catch (_) {}
+      
+      // If product not found on backend (usually 404), allow local state update for sample products
+      if (response.status === 404 || msg.includes('not found')) {
+        try {
+          const storedUpdates = await AsyncStorage.getItem('@local_product_updates');
+          const updates = storedUpdates ? JSON.parse(storedUpdates) : {};
+          updates[String(id)] = data;
+          await AsyncStorage.setItem('@local_product_updates', JSON.stringify(updates));
+        } catch (e) {
+           console.warn("Failed to save local update", e);
+        }
+        await fetchProducts();
+        return;
+      }
+      
       throw new Error(msg);
     }
     await fetchProducts();
@@ -117,6 +159,19 @@ export function useProducts(): UseProductsResult {
           const errText = await response.text();
           if (errText) msg = errText;
         } catch (_) {}
+        
+        // Optimistically delete local product
+        if (response.status === 404 || msg.includes('not found')) {
+          try {
+            const storedDeleted = await AsyncStorage.getItem('@local_product_deleted');
+            const deleted = storedDeleted ? JSON.parse(storedDeleted) : [];
+            deleted.push(String(id));
+            await AsyncStorage.setItem('@local_product_deleted', JSON.stringify(deleted));
+          } catch (e) {}
+          await fetchProducts();
+          return;
+        }
+
         // Re-sync with server if backend returned error
         await fetchProducts();
         throw new Error(msg);

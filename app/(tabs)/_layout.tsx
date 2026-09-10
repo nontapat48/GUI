@@ -13,6 +13,15 @@ export default function TabLayout() {
   const cartCount = getCartCount();
   const { user } = useAuth();
 
+  const headerStyle = {
+    fontWeight: '900' as const,
+    color: '#FFF',
+    textShadowColor: '#00F0FF',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+    letterSpacing: 1,
+  };
+
   return (
     <Tabs
       screenOptions={{
@@ -34,16 +43,13 @@ export default function TabLayout() {
           shadowOpacity: 0,
           elevation: 0,
         },
-        headerTitleStyle: {
-          fontWeight: 'bold',
-          color: colors.text,
-        },
+        headerTitleStyle: headerStyle,
         headerShown: true,
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Shop',
+          headerTitle: 'Apex Gaming Tech',
           tabBarLabel: 'Shop',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'bag-handle' : 'bag-handle-outline'} size={24} color={color} />

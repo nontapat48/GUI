@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Product } from '../constants/products';
+import { useAuth } from './AuthContext';
 
 export interface CartItem {
   product: Product;
@@ -33,10 +35,65 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const STORAGE_KEY = '@app_data';
+
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load data when user changes
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user) {
+        // Clear when user logs out
+        setCartItems([]);
+        setFavorites([]);
+        setOrders([]);
+        setIsLoaded(true);
+        return;
+      }
+      
+      try {
+        const userKey = `${STORAGE_KEY}_${user.username}`;
+        const storedData = await AsyncStorage.getItem(userKey);
+        if (storedData) {
+          const parsedData = JSON.parse(storedData);
+          setCartItems(parsedData.cartItems || []);
+          setFavorites(parsedData.favorites || []);
+          setOrders(parsedData.orders || []);
+        } else {
+          setCartItems([]);
+          setFavorites([]);
+          setOrders([]);
+        }
+      } catch (e) {
+        console.error('Failed to load user data', e);
+      } finally {
+        setIsLoaded(true);
+      }
+    };
+    
+    loadData();
+  }, [user]);
+
+  // Save data whenever state changes
+  useEffect(() => {
+    if (isLoaded && user) {
+      const saveData = async () => {
+        try {
+          const userKey = `${STORAGE_KEY}_${user.username}`;
+          const dataToSave = JSON.stringify({ cartItems, favorites, orders });
+          await AsyncStorage.setItem(userKey, dataToSave);
+        } catch (e) {
+          console.error('Failed to save user data', e);
+        }
+      };
+      saveData();
+    }
+  }, [cartItems, favorites, orders, isLoaded, user]);
 
   const addToCart = (product: Product, quantity: number, color: string, size: string) => {
     setCartItems((prevItems) => {

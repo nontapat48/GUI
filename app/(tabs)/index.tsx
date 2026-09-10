@@ -9,6 +9,8 @@ import {
   FlatList,
   Image,
   ActivityIndicator,
+  Pressable,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CATEGORIES, PRODUCTS } from '../../constants/products';
@@ -16,12 +18,38 @@ import { useProducts } from '../../hooks/useProducts';
 import { ProductCard } from '../../components/ProductCard';
 import Colors from '../../constants/Colors';
 import { useColorScheme } from '../../components/useColorScheme';
+import { useCart } from '../../context/CartContext';
+import { AnimatedRGB } from '../../components/AnimatedRGB';
+
+// TypeWriter Component
+const TypeWriter = ({ text, style, delay = 50, onComplete = () => {} }: { text: string, style?: any, delay?: number, onComplete?: () => void }) => {
+  const [displayedText, setDisplayedText] = useState('');
+  
+  React.useEffect(() => {
+    let i = 0;
+    setDisplayedText('');
+    const timer = setInterval(() => {
+      setDisplayedText(text.slice(0, i + 1));
+      i++;
+      if (i >= text.length) {
+        clearInterval(timer);
+        onComplete();
+      }
+    }, delay);
+    return () => clearInterval(timer);
+  }, [text, delay]);
+
+  return <Text style={style}>{displayedText}</Text>;
+};
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme() || 'light';
   const colors = Colors[colorScheme];
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isBannerHovered, setIsBannerHovered] = useState(false);
+  const [startSecondLine, setStartSecondLine] = useState(false);
+  const { addToCart } = useCart();
 
   // ดึงข้อมูลสินค้าจาก API
   const { products, loading, error, refetch } = useProducts();
@@ -82,11 +110,22 @@ export default function HomeScreen() {
           <>
             {/* Header */}
             <View style={styles.headerGreeting}>
-              <Text style={[styles.welcomeText, { color: colors.tabIconDefault }]}>
-                Gear Up, Player!
-              </Text>
-              <Text style={[styles.discoverText, { color: colors.text }]}>
-                Build Your Dream Rig
+              <TypeWriter 
+                text="Gear Up, Player!" 
+                style={[styles.welcomeText, { color: colors.tabIconDefault }]} 
+                delay={50}
+                onComplete={() => setStartSecondLine(true)}
+              />
+              <Text style={[styles.discoverText, { color: colors.text, opacity: startSecondLine ? 1 : 0 }]}>
+                {startSecondLine ? (
+                  <TypeWriter 
+                    text="Build Your Dream Rig" 
+                    style={[styles.discoverText, { color: colors.text }]} 
+                    delay={70}
+                  />
+                ) : (
+                  " " // placeholder to keep layout stable
+                )}
               </Text>
             </View>
 
@@ -118,22 +157,69 @@ export default function HomeScreen() {
             </View>
 
             {/* Promo Banner */}
-            <View style={[styles.promoCard, { backgroundColor: colors.tint }]}>
-              <View style={styles.promoTextContainer}>
-                <Text style={styles.promoLabel}>Gamer's Upgrade</Text>
-                <Text style={styles.promoHeading}>Elite Power</Text>
-                <Text style={styles.promoDiscount}>Next-Gen PC Parts</Text>
-                <TouchableOpacity style={styles.promoButton}>
-                  <Text style={[styles.promoButtonText, { color: colors.tint }]}>Explore</Text>
-                </TouchableOpacity>
-              </View>
-              <Image
-                source={{
-                  uri: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=500&auto=format&fit=crop&q=60',
-                }}
-                style={styles.promoImage}
-              />
-            </View>
+            <AnimatedRGB isBorder style={{ borderRadius: 18, marginBottom: 24 }}>
+              <Pressable 
+                style={[
+                  styles.promoCard, 
+                  { backgroundColor: colors.card },
+                  isBannerHovered && styles.promoCardHovered
+                ]}
+                // @ts-ignore
+                onHoverIn={() => setIsBannerHovered(true)}
+                onHoverOut={() => setIsBannerHovered(false)}
+                onPress={() => setSelectedCategory('All')}
+              >
+                {/* Left Content */}
+                <View style={styles.promoTextContainer}>
+                  <View style={styles.discountTag}>
+                    <Text style={styles.discountTagText}>UP TO 20% OFF</Text>
+                  </View>
+                  <Text style={[styles.promoHeading, { color: colors.text }]}>Elite Power</Text>
+                  <Text style={styles.promoDiscount}>Next-Gen PC Parts</Text>
+                  
+                  {/* Trust Badges */}
+                  <View style={styles.badgesRow}>
+                    <View style={styles.trustBadge}>
+                      <Ionicons name="card" size={12} color={colors.tint} />
+                      <Text style={[styles.trustBadgeText, { color: colors.text }]}>0% Installment</Text>
+                    </View>
+                    <View style={styles.trustBadge}>
+                      <Ionicons name="shield-checkmark" size={12} color={colors.tint} />
+                      <Text style={[styles.trustBadgeText, { color: colors.text }]}>3 Yrs Warranty</Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity 
+                    style={[styles.promoButton, { backgroundColor: colors.tint }]}
+                    onPress={() => setSelectedCategory('All')}
+                  >
+                    <Text style={[styles.promoButtonText, { color: '#000' }]}>Shop Now</Text>
+                    <Ionicons name="arrow-forward" size={16} color="#000" style={{ marginLeft: 4 }} />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Right Content: Multi-Product Grid */}
+                <View style={styles.promoProductsArea}>
+                  {productList && productList.slice(0, 3).map((p, i) => (
+                    <View 
+                      key={p.id} 
+                      style={[
+                        styles.promoMiniCard, 
+                        { 
+                          right: i * 55, // Increased spread from 40 to 55 to fill dead space
+                          top: (i * 20), // Adjusted top offset for better cascading
+                          zIndex: 3 - i,
+                          transform: [{ scale: 1 - (i * 0.05) }, { rotate: `${-10 + (i * 10)}deg` }] // More dynamic rotation
+                        }
+                      ]}
+                    >
+                      <Image source={{ uri: p.image }} style={styles.promoMiniImage} />
+                    </View>
+                  ))}
+                </View>
+              </Pressable>
+            </AnimatedRGB>
+
 
             {/* Categories */}
             <View style={styles.categoriesSection}>
@@ -284,56 +370,112 @@ const styles = StyleSheet.create({
   promoCard: {
     flexDirection: 'row',
     borderRadius: 16,
-    padding: 16,
-    height: 150,
+    padding: 20,
+    minHeight: 200,
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 24,
     overflow: 'hidden',
     position: 'relative',
   },
   promoTextContainer: {
-    flex: 1.2,
-    zIndex: 2,
+    flex: 1.3,
+    zIndex: 10,
+    justifyContent: 'center',
   },
-  promoLabel: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 11,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
+  discountTag: {
+    backgroundColor: '#FF003C',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  discountTagText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: '900',
     letterSpacing: 1,
   },
   promoHeading: {
-    color: '#FFF',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginVertical: 2,
+    fontSize: 26,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 2,
   },
   promoDiscount: {
-    color: '#F59E0B',
-    fontSize: 16,
-    fontWeight: '800',
-    marginBottom: 10,
+    color: '#8B5CF6',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 12,
   },
-  promoButton: {
-    backgroundColor: '#FFF',
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+  badgesRow: {
+    flexDirection: 'column',
+    gap: 6,
+    marginBottom: 16,
+  },
+  trustBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
     alignSelf: 'flex-start',
   },
-  promoButtonText: {
-    fontSize: 12,
-    fontWeight: 'bold',
+  trustBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    marginLeft: 6,
   },
-  promoImage: {
-    flex: 0.8,
-    height: 160,
-    width: 140,
+  promoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    shadowColor: '#00F0FF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  promoButtonText: {
+    fontSize: 14,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  promoProductsArea: {
+    flex: 1,
+    height: '100%',
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  promoMiniCard: {
     position: 'absolute',
-    right: -10,
-    bottom: -20,
-    transform: [{ rotate: '-10deg' }],
+    width: 140, // Increased from 100
+    height: 140, // Increased from 100
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 16, // Smoother corners for larger cards
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    padding: 10, // Increased padding
+    shadowColor: '#00F0FF', // Cyan glow shadow
+    shadowOffset: { width: -5, height: 10 }, // Stronger 3D drop shadow
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    elevation: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  promoMiniImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
+  promoCardHovered: {
+    transform: [{ scale: 1.01 }],
   },
 
   // Categories

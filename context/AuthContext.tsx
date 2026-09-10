@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type UserRole = 'admin' | 'user';
 
@@ -10,6 +11,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  isInitialized: boolean;
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
   logout: () => void;
@@ -18,10 +20,29 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const API_BASE_URL = 'http://119.59.102.161:3023/api/auth';
+const AUTH_STORAGE_KEY = '@auth_user';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    // Load user from storage on mount
+    const loadUser = async () => {
+      try {
+        const storedUser = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+      } catch (e) {
+        console.error('Failed to load user from storage', e);
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+    loadUser();
+  }, []);
 
   const login = async (username: string, password: string) => {
     setIsLoading(true);
@@ -40,8 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const role: UserRole =
         username === 'admin_new' && password === '123456' ? 'admin' : 'user';
 
-      // Setting user triggers navigation guard in _layout.tsx automatically
-      setUser({ username, role });
+      const newUser = { username, role };
+      setUser(newUser);
+      await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newUser));
     } catch (error) {
       throw error;
     } finally {
@@ -74,13 +96,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
-    // Setting user to null triggers navigation guard in _layout.tsx automatically
+  const logout = async () => {
     setUser(null);
+    try {
+      await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
+    } catch (e) {
+      console.error('Failed to remove user from storage', e);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, isInitialized, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

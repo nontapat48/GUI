@@ -1,23 +1,23 @@
-const tintColorLight = '#8B5CF6'; // Vibrant Purple
-const tintColorDark = '#A78BFA';  // Soft Neon Purple
+const tintColorLight = '#00F0FF'; // Cyber Cyan
+const tintColorDark = '#8B5CF6';  // Neon Purple
 
 export default {
   light: {
-    text: '#0F172A',           // Deep slate
-    background: '#F8FAFC',     // Clean slate bg
+    text: '#F3F4F6',           // Bright text for contrast
+    background: '#1A1A24',     // Dark slate gaming bg
     tint: tintColorLight,
-    tabIconDefault: '#94A3B8', // Slate 400
+    tabIconDefault: '#64748B', 
     tabIconSelected: tintColorLight,
-    card: '#FFFFFF',
-    border: '#E2E8F0',
+    card: '#27273A',           // Elevated panel
+    border: '#33334D',         // Subtle border
   },
   dark: {
-    text: '#F3F4F6',           // Bright light grey
-    background: '#070A13',     // Minimal midnight black
+    text: '#F8FAFC',           
+    background: '#0B0E14',     // Midnight black
     tint: tintColorDark,
-    tabIconDefault: '#4B5563', // Dark grey
+    tabIconDefault: '#475569', 
     tabIconSelected: tintColorDark,
-    card: '#111625',           // Space black card
-    border: '#1E293B',         // Subtle border
+    card: '#151A22',           // Space black card
+    border: '#2A303C',         
   },
 };

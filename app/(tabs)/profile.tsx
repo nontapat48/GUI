@@ -149,8 +149,8 @@ export default function ProfileScreen() {
         </View>
 
         {/* Action Menu */}
-        <View style={[styles.menuContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]}>
+        <View style={[styles.menuContainer, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 16 }]}>
+          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]} onPress={() => router.push('/shipping')}>
             <View style={styles.menuItemLeft}>
               <Ionicons name="location-outline" size={20} color={colors.text} style={styles.menuIcon} />
               <Text style={[styles.menuText, { color: colors.text }]}>Shipping Addresses</Text>
@@ -158,21 +158,17 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={16} color={colors.tabIconDefault} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: 'transparent' }]} onPress={() => router.push('/payment')}>
             <View style={styles.menuItemLeft}>
               <Ionicons name="card-outline" size={20} color={colors.text} style={styles.menuIcon} />
               <Text style={[styles.menuText, { color: colors.text }]}>Payment Methods</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={colors.tabIconDefault} />
           </TouchableOpacity>
+        </View>
 
-          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]}>
-            <View style={styles.menuItemLeft}>
-              <Ionicons name="notifications-outline" size={20} color={colors.text} style={styles.menuIcon} />
-              <Text style={[styles.menuText, { color: colors.text }]}>Notifications</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.tabIconDefault} />
-          </TouchableOpacity>
+        {/* Action Menu (Logout - For all) */}
+        <View style={[styles.menuContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
 
           <TouchableOpacity style={styles.menuItem} onPress={logout}>
             <View style={styles.menuItemLeft}>

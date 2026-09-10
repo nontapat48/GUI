@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,10 +8,14 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Platform,
+  Animated,
+  Easing,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart, CartItem, Order } from '../../context/CartContext';
+import { useProducts } from '../../hooks/useProducts';
 import Colors from '../../constants/Colors';
 import { useColorScheme } from '../../components/useColorScheme';
 
@@ -20,51 +24,82 @@ export default function CartScreen() {
   const colorScheme = useColorScheme() || 'light';
   const colors = Colors[colorScheme];
   const { cartItems, updateQuantity, removeFromCart, getCartTotal, clearCart, addOrder } = useCart();
+  const { deleteProduct } = useProducts();
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // HUD Animation
+  const spinAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const startAnimation = () => {
+      spinAnim.setValue(0);
+      Animated.timing(spinAnim, {
+        toValue: 1,
+        duration: 8000,
+        easing: Easing.linear,
+        useNativeDriver: false,
+        isInteraction: false,
+      }).start(({ finished }) => {
+        if (finished) {
+          startAnimation();
+        }
+      });
+    };
+    startAnimation();
+  }, [spinAnim]);
+
+  const spinForward = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg']
+  });
+
+  const spinBackward = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['360deg', '0deg']
+  });
 
   const subtotal = getCartTotal();
   const shipping = subtotal > 0 ? (subtotal > 200 ? 0 : 15) : 0; // Free shipping for orders over $200
   const tax = subtotal * 0.07; // 7% tax
   const total = subtotal + shipping + tax;
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (isProcessing) return;
+    
+    setIsProcessing(true);
+    
+    // Simulate payment processing
+    await new Promise((res) => setTimeout(res, 1500));
+
+    // Reduce stock (Delete product from store)
+    for (const item of cartItems) {
+      try {
+        await deleteProduct(item.product.id);
+      } catch (e) {
+        console.log('Failed to delete product', item.product.id);
+      }
+    }
+
+    const orderId = 'ORD-' + Math.floor(Math.random() * 90000 + 10000);
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const newOrder: Order = {
+      id: orderId,
+      date: dateStr,
+      total: total,
+      status: 'Processing',
+      items: [...cartItems],
+    };
+
+    addOrder(newOrder);
+    clearCart();
+    setIsProcessing(false);
+
     Alert.alert(
-      'Confirm Order',
-      `Place order for $${total.toFixed(2)}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Place Order',
-          onPress: async () => {
-            setIsProcessing(true);
-            // Simulate payment processing
-            await new Promise((res) => setTimeout(res, 1500));
-
-            const orderId = 'ORD-' + Math.floor(Math.random() * 90000 + 10000);
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
-            const newOrder: Order = {
-              id: orderId,
-              date: dateStr,
-              total: total,
-              status: 'Processing',
-              items: [...cartItems],
-            };
-
-            addOrder(newOrder);
-            clearCart();
-            setIsProcessing(false);
-
-            Alert.alert(
-              '🎉 Order Placed!',
-              `Order ${orderId} placed successfully! Check your profile for order status.`,
-              [{ text: 'Awesome!', onPress: () => router.push('/(tabs)/profile') }]
-            );
-          },
-        },
-      ]
+      '🎉 Order Placed!',
+      `Order ${orderId} placed successfully! Check your profile for order status.`,
+      [{ text: 'Awesome!', onPress: () => router.push('/(tabs)/profile') }]
     );
   };
 
@@ -125,10 +160,15 @@ export default function CartScreen() {
   if (cartItems.length === 0) {
     return (
       <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-        <Ionicons name="cart-outline" size={80} color={colors.tabIconDefault} />
+        <View style={styles.hudContainer}>
+          <Animated.View style={[styles.hudRingOuter, { transform: [{ rotate: spinForward }] }]} />
+          <Animated.View style={[styles.hudRingMiddle, { transform: [{ rotate: spinBackward }] }]} />
+          <View style={styles.hudRingInner} />
+          <Ionicons name="cart" size={48} color={colors.tint} style={styles.lockIcon} />
+        </View>
         <Text style={[styles.emptyTitle, { color: colors.text }]}>Your Cart is Empty</Text>
-        <Text style={[styles.emptySubtitle, { color: colors.tabIconDefault }]}>
-          Looks like you haven't added anything to your cart yet.
+        <Text style={[styles.emptySubtitle, { color: '#9CA3AF' }]}>
+          Looks like you haven't added anything to{'\n'}your cart yet.
         </Text>
         <TouchableOpacity
           style={[styles.shopBtn, { backgroundColor: colors.tint }]}
@@ -303,26 +343,74 @@ const styles = StyleSheet.create({
     padding: 32,
   },
   emptyTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   emptySubtitle: {
-    fontSize: 14,
+    fontSize: 16,
     textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 24,
+  },
+  // HUD Styles
+  hudContainer: {
+    width: 140,
+    height: 140,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 24,
-    maxWidth: 260,
+  },
+  hudRingOuter: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 2,
+    borderColor: '#00F0FF',
+    borderStyle: 'dashed',
+    opacity: 0.6,
+  },
+  hudRingMiddle: {
+    position: 'absolute',
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    borderWidth: 4,
+    borderColor: '#00F0FF',
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    opacity: 0.9,
+  },
+  hudRingInner: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 1,
+    borderColor: '#00F0FF',
+    opacity: 0.5,
+  },
+  lockIcon: {
+    textShadowColor: '#00F0FF',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 15,
   },
   shopBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 12,
+    shadowColor: '#00F0FF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 5,
   },
   shopBtnText: {
     color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 15,
+    fontWeight: '900',
+    fontSize: 16,
+    letterSpacing: 1,
   },
   summaryContainer: {
     marginTop: 16,

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Animated, Easing } from 'react-native';
 import { Link, router } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import Colors from '../../constants/Colors';
@@ -14,43 +14,82 @@ export default function RegisterScreen() {
   const colorScheme = useColorScheme() || 'light';
   const colors = Colors[colorScheme];
 
+  // Continuous rotation for HUD rings
+  const spinAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const startAnimation = () => {
+      spinAnim.setValue(0);
+      Animated.timing(spinAnim, {
+        toValue: 1,
+        duration: 8000,
+        easing: Easing.linear,
+        useNativeDriver: false,
+        isInteraction: false,
+      }).start(({ finished }) => {
+        if (finished) {
+          startAnimation();
+        }
+      });
+    };
+    
+    startAnimation();
+  }, [spinAnim]);
+
+  const spinForward = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg']
+  });
+
+  const spinBackward = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['360deg', '0deg']
+  });
+
   const handleRegister = async () => {
     if (!username || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert('System Error', 'Required parameters missing.');
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      Alert.alert('Verification Failed', 'Passcodes do not match.');
       return;
     }
 
     try {
       await register(username, password);
       Alert.alert(
-        'Success',
-        'Account created successfully. Please log in.',
-        [{ text: 'OK', onPress: () => router.push('/(auth)/login') }]
+        'Registration Complete',
+        'New user identity established. Proceed to login.',
+        [{ text: 'PROCEED', onPress: () => router.push('/(auth)/login') }]
       );
     } catch (error: any) {
-      Alert.alert('Registration Failed', error.message || 'Something went wrong');
+      Alert.alert('Registration Failed', error.message || 'System rejection');
     }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Ionicons name="person-add-outline" size={80} color={colors.tint} />
-        <Text style={[styles.title, { color: colors.text }]}>Create Account</Text>
-        <Text style={[styles.subtitle, { color: colors.tabIconDefault }]}>Sign up to get started</Text>
+        {/* Animated Cyber HUD Lock */}
+        <View style={styles.hudContainer}>
+          <Animated.View style={[styles.hudRingOuter, { transform: [{ rotate: spinForward }] }]} />
+          <Animated.View style={[styles.hudRingMiddle, { transform: [{ rotate: spinBackward }] }]} />
+          <View style={styles.hudRingInner} />
+          <Ionicons name="person-add" size={48} color={colors.tint} style={styles.lockIcon} />
+        </View>
+
+        <Text style={[styles.title, { color: colors.tint }]}>NEW IDENTITY</Text>
+        <Text style={[styles.subtitle, { color: colors.tabIconDefault }]}>CREATE SYSTEM ACCOUNT</Text>
       </View>
 
       <View style={styles.form}>
-        <View style={styles.inputContainer}>
-          <Ionicons name="person-outline" size={20} color={colors.tabIconDefault} style={styles.inputIcon} />
+        <View style={[styles.inputContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Ionicons name="person-outline" size={20} color={colors.tint} style={styles.inputIcon} />
           <TextInput
-            style={[styles.input, { color: colors.text, borderColor: colors.border }]}
-            placeholder="Username"
+            style={[styles.input, { color: colors.text }]}
+            placeholder="Choose Username / ID"
             placeholderTextColor={colors.tabIconDefault}
             value={username}
             onChangeText={setUsername}
@@ -58,11 +97,11 @@ export default function RegisterScreen() {
           />
         </View>
 
-        <View style={styles.inputContainer}>
-          <Ionicons name="lock-closed-outline" size={20} color={colors.tabIconDefault} style={styles.inputIcon} />
+        <View style={[styles.inputContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Ionicons name="lock-closed-outline" size={20} color={colors.tint} style={styles.inputIcon} />
           <TextInput
-            style={[styles.input, { color: colors.text, borderColor: colors.border }]}
-            placeholder="Password"
+            style={[styles.input, { color: colors.text }]}
+            placeholder="Set Passcode"
             placeholderTextColor={colors.tabIconDefault}
             secureTextEntry
             value={password}
@@ -70,11 +109,11 @@ export default function RegisterScreen() {
           />
         </View>
 
-        <View style={styles.inputContainer}>
-          <Ionicons name="lock-closed-outline" size={20} color={colors.tabIconDefault} style={styles.inputIcon} />
+        <View style={[styles.inputContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Ionicons name="lock-closed-outline" size={20} color={colors.tint} style={styles.inputIcon} />
           <TextInput
-            style={[styles.input, { color: colors.text, borderColor: colors.border }]}
-            placeholder="Confirm Password"
+            style={[styles.input, { color: colors.text }]}
+            placeholder="Confirm Passcode"
             placeholderTextColor={colors.tabIconDefault}
             secureTextEntry
             value={confirmPassword}
@@ -88,17 +127,17 @@ export default function RegisterScreen() {
           disabled={isLoading}
         >
           {isLoading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color="#000" />
           ) : (
-            <Text style={styles.buttonText}>Sign Up</Text>
+            <Text style={styles.buttonText}>REGISTER IDENTITY</Text>
           )}
         </TouchableOpacity>
 
         <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: colors.tabIconDefault }]}>Already have an account? </Text>
+          <Text style={[styles.footerText, { color: colors.tabIconDefault }]}>EXISTING USER? </Text>
           <Link href="/(auth)/login" asChild>
             <TouchableOpacity>
-              <Text style={[styles.linkText, { color: colors.tint }]}>Log In</Text>
+              <Text style={[styles.linkText, { color: colors.tint }]}>SYSTEM LOGIN</Text>
             </TouchableOpacity>
           </Link>
         </View>
@@ -117,14 +156,61 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 48,
   },
+  // HUD Styles
+  hudContainer: {
+    width: 140,
+    height: 140,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  hudRingOuter: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 2,
+    borderColor: '#00F0FF',
+    borderStyle: 'dashed',
+    opacity: 0.6,
+  },
+  hudRingMiddle: {
+    position: 'absolute',
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    borderWidth: 4,
+    borderColor: '#00F0FF',
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    opacity: 0.9,
+  },
+  hudRingInner: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 1,
+    borderColor: '#00F0FF',
+    opacity: 0.5,
+  },
+  lockIcon: {
+    textShadowColor: '#00F0FF',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 15,
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
+    letterSpacing: 2,
     marginTop: 16,
+    textTransform: 'uppercase',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     marginTop: 8,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   form: {
     width: '100%',
@@ -134,29 +220,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    paddingHorizontal: 16,
   },
   inputIcon: {
     marginRight: 10,
   },
   input: {
     flex: 1,
-    height: 50,
+    height: 54,
     fontSize: 16,
+    letterSpacing: 1,
+    // @ts-ignore
+    outlineStyle: 'none',
   },
   button: {
-    height: 50,
-    borderRadius: 12,
+    height: 54,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 16,
+    shadowColor: '#00F0FF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 5,
   },
   buttonText: {
-    color: '#FFF',
+    color: '#000',
     fontSize: 16,
     fontWeight: 'bold',
+    letterSpacing: 1.5,
   },
   footer: {
     flexDirection: 'row',
@@ -164,10 +258,13 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   footerText: {
-    fontSize: 14,
+    fontSize: 12,
+    letterSpacing: 1,
   },
   linkText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
+    letterSpacing: 1,
+    textDecorationLine: 'underline',
   },
 });
