@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { Product } from '../constants/products';
 
 const API_URL = 'http://119.59.102.161:3023/api/products';
@@ -20,8 +21,8 @@ export function useProducts(): UseProductsResult {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
+  const fetchProducts = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const response = await fetch(API_URL);
@@ -44,13 +45,16 @@ export function useProducts(): UseProductsResult {
       );
       setProducts([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+  useFocusEffect(
+    useCallback(() => {
+      // Fetch silently if products already exist to avoid UI flicker
+      fetchProducts(products.length > 0);
+    }, [fetchProducts, products.length > 0])
+  );
 
   // --- CREATE ---
   const createProduct = useCallback(async (data: ProductInput) => {
