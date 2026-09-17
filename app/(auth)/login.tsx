@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Link } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import Colors from '../../constants/Colors';
@@ -9,20 +9,22 @@ import { Ionicons } from '@expo/vector-icons';
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
   const { login, isLoading } = useAuth();
   const colorScheme = useColorScheme() || 'light';
   const colors = Colors[colorScheme];
 
   const handleLogin = async () => {
+    setErrorMsg('');
     if (!username || !password) {
-      Alert.alert('Error', 'Please enter username and password');
+      setErrorMsg('Please enter username and password');
       return;
     }
 
     try {
       await login(username, password);
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'Something went wrong');
+      setErrorMsg(error.message || 'Something went wrong');
     }
   };
 
@@ -35,6 +37,12 @@ export default function LoginScreen() {
       </View>
 
       <View style={styles.form}>
+        {errorMsg ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{errorMsg}</Text>
+          </View>
+        ) : null}
+
         <View style={styles.inputContainer}>
           <Ionicons name="person-outline" size={20} color={colors.tabIconDefault} style={styles.inputIcon} />
           <TextInput
@@ -105,6 +113,17 @@ const styles = StyleSheet.create({
   },
   form: {
     width: '100%',
+  },
+  errorContainer: {
+    backgroundColor: '#FEE2E2',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#EF4444',
+    textAlign: 'center',
+    fontSize: 14,
   },
   inputContainer: {
     flexDirection: 'row',

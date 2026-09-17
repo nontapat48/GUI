@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Link, router } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import Colors from '../../constants/Colors';
@@ -10,30 +10,34 @@ export default function RegisterScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const { register, isLoading } = useAuth();
   const colorScheme = useColorScheme() || 'light';
   const colors = Colors[colorScheme];
 
   const handleRegister = async () => {
+    setErrorMsg('');
+    setSuccessMsg('');
+    
     if (!username || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      setErrorMsg('Please fill in all fields');
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      setErrorMsg('Passwords do not match');
       return;
     }
 
     try {
       await register(username, password);
-      Alert.alert(
-        'Success',
-        'Account created successfully. Please log in.',
-        [{ text: 'OK', onPress: () => router.push('/(auth)/login') }]
-      );
+      setSuccessMsg('Account created successfully. Redirecting to log in...');
+      setTimeout(() => {
+        router.push('/(auth)/login');
+      }, 1500);
     } catch (error: any) {
-      Alert.alert('Registration Failed', error.message || 'Something went wrong');
+      setErrorMsg(error.message || 'Something went wrong');
     }
   };
 
@@ -46,6 +50,18 @@ export default function RegisterScreen() {
       </View>
 
       <View style={styles.form}>
+        {errorMsg ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{errorMsg}</Text>
+          </View>
+        ) : null}
+        
+        {successMsg ? (
+          <View style={styles.successContainer}>
+            <Text style={styles.successText}>{successMsg}</Text>
+          </View>
+        ) : null}
+
         <View style={styles.inputContainer}>
           <Ionicons name="person-outline" size={20} color={colors.tabIconDefault} style={styles.inputIcon} />
           <TextInput
@@ -128,6 +144,28 @@ const styles = StyleSheet.create({
   },
   form: {
     width: '100%',
+  },
+  errorContainer: {
+    backgroundColor: '#FEE2E2',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#EF4444',
+    textAlign: 'center',
+    fontSize: 14,
+  },
+  successContainer: {
+    backgroundColor: '#DCFCE7',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  successText: {
+    color: '#15803D',
+    textAlign: 'center',
+    fontSize: 14,
   },
   inputContainer: {
     flexDirection: 'row',

@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         let errMsg = 'Registration failed';
         try {
           const errData = await response.json();
-          errMsg = errData.message || errMsg;
+          errMsg = errData.error || errData.message || errMsg;
         } catch (_) {}
         throw new Error(errMsg);
       }

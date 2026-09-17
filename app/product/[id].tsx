@@ -33,6 +33,17 @@ export default function ProductDetailsScreen() {
   // Find product by id
   const product = (productList || []).find((p) => String(p.id) === String(id));
 
+  const safeColors = product && Array.isArray(product.colors) && product.colors.length > 0 ? product.colors : ['Default'];
+  const safeSizes = product && Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : ['Default'];
+
+  const [selectedColor, setSelectedColor] = useState(safeColors[0]);
+  const [selectedSize, setSelectedSize] = useState(safeSizes[0]);
+  const [quantity, setQuantity] = useState(1);
+  const favorite = product ? isFavorite(product.id) : false;
+
+  const incrementQty = () => setQuantity((prev) => prev + 1);
+  const decrementQty = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+
   if (!product) {
     return (
       <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
@@ -44,17 +55,6 @@ export default function ProductDetailsScreen() {
       </View>
     );
   }
-
-  const safeColors = Array.isArray(product.colors) && product.colors.length > 0 ? product.colors : ['Default'];
-  const safeSizes = Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : ['Default'];
-
-  const [selectedColor, setSelectedColor] = useState(safeColors[0]);
-  const [selectedSize, setSelectedSize] = useState(safeSizes[0]);
-  const [quantity, setQuantity] = useState(1);
-  const favorite = isFavorite(product.id);
-
-  const incrementQty = () => setQuantity((prev) => prev + 1);
-  const decrementQty = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
   const handleAddToCart = () => {
     addToCart(product, quantity, selectedColor, selectedSize);
