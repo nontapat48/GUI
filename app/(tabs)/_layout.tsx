@@ -24,9 +24,10 @@ export default function TabLayout() {
           elevation: 5,
           shadowOpacity: 0.1,
           shadowRadius: 5,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
+          height: 65,
+          paddingBottom: 5,
+          paddingTop: 5,
+          tabBarLabelStyle: { fontSize: 11, paddingBottom: 2 },
         },
         headerStyle: {
           backgroundColor: colors.card,
@@ -43,7 +44,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Shop',
+          title: 'Apex Game Shop',
           tabBarLabel: 'Shop',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'bag-handle' : 'bag-handle-outline'} size={24} color={color} />

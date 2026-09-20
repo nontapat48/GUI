@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  Dimensions,
   FlatList,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PRODUCTS, Product } from '../../constants/products';
@@ -16,18 +16,16 @@ import { useProducts } from '../../hooks/useProducts';
 import { ProductCard } from '../../components/ProductCard';
 import Colors from '../../constants/Colors';
 import { useColorScheme } from '../../components/useColorScheme';
-
-const { width } = Dimensions.get('window');
 const CATEGORY_CARDS = [
-  { name: 'Electronics', icon: 'desktop-outline', count: 3, image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&auto=format&fit=crop&q=60' },
-  { name: 'Apparel', icon: 'shirt-outline', count: 1, image: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=300&auto=format&fit=crop&q=60' },
-  { name: 'Accessories', icon: 'watch-outline', count: 3, image: 'https://images.unsplash.com/photo-1627124765135-566b68a24c5b?w=300&auto=format&fit=crop&q=60' },
-  { name: 'Shoes', icon: 'footsteps-outline', count: 1, image: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&auto=format&fit=crop&q=60' },
+  { name: 'GPU', icon: 'hardware-chip-outline', image: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?w=300&auto=format&fit=crop&q=60' },
+  { name: 'CPU', icon: 'server-outline', image: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=300&auto=format&fit=crop&q=60' },
+  { name: 'RAM', icon: 'save-outline', image: 'https://images.unsplash.com/photo-1541029071515-84cc54f84dc5?w=300&auto=format&fit=crop&q=60' },
+  { name: 'SSD', icon: 'albums-outline', image: 'https://images.unsplash.com/photo-1562976540-1502c2145186?w=300&auto=format&fit=crop&q=60' },
 ];
 
-const TRENDING_SEARCHES = ['Sony', 'Sneakers', 'Watch', 'Coat', 'Wallet'];
-
 export default function ExploreScreen() {
+  const { width } = useWindowDimensions();
+  const numColumns = width >= 1024 ? 4 : width >= 768 ? 3 : 2;
   const colorScheme = useColorScheme() || 'light';
   const colors = Colors[colorScheme];
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,6 +41,11 @@ export default function ExploreScreen() {
     const matchesCategory = selectedCategory ? product.category === selectedCategory : true;
     return matchesSearch && matchesCategory;
   });
+
+  const categoryCardsWithCount = CATEGORY_CARDS.map(cat => ({
+    ...cat,
+    count: (productList || []).filter(p => p.category === cat.name).length
+  }));
 
   const handleCategoryPress = (categoryName: string) => {
     setSelectedCategory(selectedCategory === categoryName ? null : categoryName);
@@ -94,10 +97,10 @@ export default function ExploreScreen() {
             {/* Category Cards Grid */}
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Browse Categories</Text>
             <View style={styles.categoryGrid}>
-              {CATEGORY_CARDS.map((cat) => (
+              {categoryCardsWithCount.map((cat) => (
                 <TouchableOpacity
                   key={cat.name}
-                  style={[styles.categoryCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  style={[styles.categoryCard, { backgroundColor: colors.card, borderColor: colors.border, width: (width - 44) / (width >= 768 ? 4 : 2) }]}
                   onPress={() => handleCategoryPress(cat.name)}
                 >
                   <Image source={{ uri: cat.image }} style={styles.categoryImage} resizeMode="cover" />
@@ -112,20 +115,7 @@ export default function ExploreScreen() {
               ))}
             </View>
 
-            {/* Trending Searches */}
-            <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 12 }]}>Trending Searches</Text>
-            <View style={styles.trendingContainer}>
-              {TRENDING_SEARCHES.map((term) => (
-                <TouchableOpacity
-                  key={term}
-                  style={[styles.trendingTag, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => handleTrendingPress(term)}
-                >
-                  <Ionicons name="trending-up" size={14} color={colors.tint} style={styles.trendingIcon} />
-                  <Text style={[styles.trendingText, { color: colors.text }]}>{term}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+
 
             {/* Recommended Products */}
             <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 24, marginBottom: 12 }]}>
@@ -135,7 +125,8 @@ export default function ExploreScreen() {
               data={(productList || []).slice(0, 4)}
               renderItem={({ item }) => <ProductCard product={item} />}
               keyExtractor={(item) => String(item.id)}
-              numColumns={2}
+              key={numColumns}
+              numColumns={numColumns}
               columnWrapperStyle={styles.row}
               scrollEnabled={false}
               showsVerticalScrollIndicator={false}
@@ -155,7 +146,8 @@ export default function ExploreScreen() {
                 data={filteredProducts}
                 renderItem={({ item }) => <ProductCard product={item} />}
                 keyExtractor={(item) => item.id}
-                numColumns={2}
+                key={`search-${numColumns}`}
+                numColumns={numColumns}
                 columnWrapperStyle={styles.row}
                 scrollEnabled={false}
                 showsVerticalScrollIndicator={false}
@@ -237,7 +229,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   categoryCard: {
-    width: (width - 44) / 2,
     height: 120,
     borderRadius: 14,
     overflow: 'hidden',

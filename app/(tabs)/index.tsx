@@ -9,6 +9,7 @@ import {
   FlatList,
   Image,
   ActivityIndicator,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CATEGORIES, PRODUCTS } from '../../constants/products';
@@ -18,6 +19,8 @@ import Colors from '../../constants/Colors';
 import { useColorScheme } from '../../components/useColorScheme';
 
 export default function HomeScreen() {
+  const { width } = useWindowDimensions();
+  const numColumns = width >= 1024 ? 4 : width >= 768 ? 3 : 2;
   const colorScheme = useColorScheme() || 'light';
   const colors = Colors[colorScheme];
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -74,7 +77,8 @@ export default function HomeScreen() {
         data={filteredProducts}
         renderItem={({ item }) => <ProductCard product={item} />}
         keyExtractor={(item) => String(item.id)}
-        numColumns={2}
+        key={numColumns}
+        numColumns={numColumns}
         columnWrapperStyle={styles.row}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
@@ -123,9 +127,6 @@ export default function HomeScreen() {
                 <Text style={styles.promoLabel}>Gamer's Upgrade</Text>
                 <Text style={styles.promoHeading}>Elite Power</Text>
                 <Text style={styles.promoDiscount}>Next-Gen PC Parts</Text>
-                <TouchableOpacity style={styles.promoButton}>
-                  <Text style={[styles.promoButtonText, { color: colors.tint }]}>Explore</Text>
-                </TouchableOpacity>
               </View>
               <Image
                 source={{

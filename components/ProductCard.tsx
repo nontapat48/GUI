@@ -8,8 +8,6 @@ import Colors from '../constants/Colors';
 import { useColorScheme } from './useColorScheme';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 48) / 2; // 2 column layout with padding
-
 interface ProductCardProps {
   product: Product;
 }
@@ -37,7 +35,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </TouchableOpacity>
 
         {/* Product Image */}
-        <Image source={{ uri: product.image }} style={styles.image} resizeMode="cover" />
+        <Image source={{ uri: product.image }} style={styles.image} resizeMode="contain" />
 
         {/* Product Info */}
         <View style={styles.infoContainer}>
@@ -69,7 +67,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
 const styles = StyleSheet.create({
   card: {
-    width: CARD_WIDTH,
+    flex: 1,
+    marginHorizontal: 4,
     borderRadius: 16,
     borderWidth: 1,
     overflow: 'hidden',

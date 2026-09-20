@@ -107,73 +107,8 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Order History */}
-        <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Order History</Text>
-          {orders.length === 0 ? (
-            <View style={[styles.emptyOrders, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Ionicons name="receipt-outline" size={40} color={colors.tabIconDefault} />
-              <Text style={[styles.emptyOrderText, { color: colors.tabIconDefault }]}>
-                No orders yet. Start shopping!
-              </Text>
-            </View>
-          ) : (
-            orders.map((order: Order) => (
-              <View key={order.id} style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <View style={styles.orderHeader}>
-                  <Text style={[styles.orderId, { color: colors.text }]}>{order.id}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: statusColor(order.status) }]}>
-                    <Text style={styles.statusText}>{order.status}</Text>
-                  </View>
-                </View>
-                {order.items.slice(0, 2).map((item, idx) => (
-                  <View key={idx} style={styles.orderItemRow}>
-                    <Image source={{ uri: item.product.image }} style={styles.orderItemImg} />
-                    <Text style={[styles.orderItemName, { color: colors.tabIconDefault }]} numberOfLines={1}>
-                      {item.product.name} × {item.quantity}
-                    </Text>
-                  </View>
-                ))}
-                {order.items.length > 2 && (
-                  <Text style={[styles.moreItems, { color: colors.tabIconDefault }]}>
-                    +{order.items.length - 2} more item{order.items.length - 2 > 1 ? 's' : ''}
-                  </Text>
-                )}
-                <View style={[styles.orderFooter, { borderTopColor: colors.border }]}>
-                  <Text style={[styles.orderDate, { color: colors.tabIconDefault }]}>{order.date}</Text>
-                  <Text style={[styles.orderTotal, { color: colors.text }]}>Total: ${order.total.toFixed(2)}</Text>
-                </View>
-              </View>
-            ))
-          )}
-        </View>
-
         {/* Action Menu */}
         <View style={[styles.menuContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]}>
-            <View style={styles.menuItemLeft}>
-              <Ionicons name="location-outline" size={20} color={colors.text} style={styles.menuIcon} />
-              <Text style={[styles.menuText, { color: colors.text }]}>Shipping Addresses</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.tabIconDefault} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]}>
-            <View style={styles.menuItemLeft}>
-              <Ionicons name="card-outline" size={20} color={colors.text} style={styles.menuIcon} />
-              <Text style={[styles.menuText, { color: colors.text }]}>Payment Methods</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.tabIconDefault} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.border }]}>
-            <View style={styles.menuItemLeft}>
-              <Ionicons name="notifications-outline" size={20} color={colors.text} style={styles.menuIcon} />
-              <Text style={[styles.menuText, { color: colors.text }]}>Notifications</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.tabIconDefault} />
-          </TouchableOpacity>
-
           <TouchableOpacity style={styles.menuItem} onPress={logout}>
             <View style={styles.menuItemLeft}>
               <Ionicons name="log-out-outline" size={20} color="#EF4444" style={styles.menuIcon} />
